@@ -9,7 +9,7 @@
 #include <stdlib.h>
 
 #define OUTPUT_SIZE 30
-#define CYCLE_FRENQUENCY 5
+#define CYCLE_FRENQUENCY 3
 
 
 // --- Prototypes ---

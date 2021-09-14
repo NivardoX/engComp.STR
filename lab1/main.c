@@ -30,11 +30,8 @@ char output[OUTPUT_SIZE];
 
 
 int check_if_finished(){
-    if (cursor >= OUTPUT_SIZE){
-        return 1;
-    }
+    return cursor >= OUTPUT_SIZE;
 
-    return 0;
 }
 
 void finish(){
@@ -51,9 +48,15 @@ void populate_output_block_and_release_others(int self){
             return;
         }
 
-        output[cursor++] = self + 65;
+        // Chars are nothing but ints represented by ASCII table
+        // 'A' + 0 = 'A'
+        // 'A' + 1 = 'B'
+        // ...
+        output[cursor++] = self + 'A';
 
         thread_flags[self] = 0;
+
+        // if is the last one the % operator will return 0 which will restart the cycle
         thread_flags[(self+1) % CYCLE_FRENQUENCY] = 1;
 
 }
@@ -62,7 +65,9 @@ void *fill_char_array (void *arg) {
 
     int offset = *((int *)arg);
 
-    printf("Starting thread %d with symbol %c \n",offset,offset +65);
+
+
+    printf("Starting thread %d with symbol %c \n",offset,offset + 'A');
 
     while (cursor < OUTPUT_SIZE) {
 

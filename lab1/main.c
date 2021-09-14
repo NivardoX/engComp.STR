@@ -4,12 +4,14 @@
  * 
  **/
 
+#include <string.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #define OUTPUT_SIZE 30
 #define CYCLE_FRENQUENCY 3
+#define EXPECTED "ABCABCABCABCABCABCABCABCABCABC"
 
 
 // --- Prototypes ---
@@ -19,27 +21,62 @@ void *fill_char_array (void *arg);
 // --- Globals --- 
 pthread_t threads[CYCLE_FRENQUENCY];
 int thread_args [CYCLE_FRENQUENCY];
+
+int thread_flags [CYCLE_FRENQUENCY];
+
+int cursor = 0;
 char output[OUTPUT_SIZE];
 // ---------------
+
+
+int check_if_finished(){
+    if (cursor >= OUTPUT_SIZE){
+        return 1;
+    }
+
+    return 0;
+}
+
+void finish(){
+    for (int thread_number = 0; thread_number < CYCLE_FRENQUENCY; thread_number++){
+        thread_flags[thread_number] = 1;
+    }
+
+}
+
+void populate_output_block_and_release_others(int self){
+    
+        if (check_if_finished()){
+            finish();
+            return;
+        }
+
+        output[cursor++] = self + 65;
+
+        thread_flags[self] = 0;
+        thread_flags[(self+1) % CYCLE_FRENQUENCY] = 1;
+
+}
 
 void *fill_char_array (void *arg) {
 
     int offset = *((int *)arg);
-    char symbol = offset + 64;
 
-    printf("Starting thread %d with symbol %c \n",offset,symbol);
+    printf("Starting thread %d with symbol %c \n",offset,offset +65);
 
-    for (int idx = offset-1; idx < OUTPUT_SIZE; idx+=CYCLE_FRENQUENCY)
-    {
-        output[idx] = symbol;
+    while (cursor < OUTPUT_SIZE) {
+
+        while (!thread_flags[offset]);
+        populate_output_block_and_release_others(offset);
     }
 
 }
 
 int main (){
+    thread_flags[0] = 1;
 
     for (int thread_number = 0; thread_number < CYCLE_FRENQUENCY; thread_number++){
-            thread_args[thread_number] = thread_number+1;
+            thread_args[thread_number] = thread_number;
             pthread_create(&threads[thread_number], NULL, fill_char_array, &thread_args[thread_number]);   
 
     }
@@ -51,6 +88,11 @@ int main (){
 
     printf("%s\n", output);
 
+    if (strcmp(output, EXPECTED) == 0) {
+        printf("Correct result %s = %s\n",output,EXPECTED);
+    } else {
+        printf("Incorrect result %s != %s\n",output,EXPECTED);
+    }
 
     exit(0);
 }
